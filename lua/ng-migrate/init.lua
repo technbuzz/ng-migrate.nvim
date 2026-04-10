@@ -3,27 +3,31 @@ local finders = require('telescope.finders')
 local previewers = require('telescope.previewers')
 local config = require('telescope.config').values
 
+local log = require('plenary.log'):new()
+log.level = 'debug'
+
 local M = {};
 
 M.show_docker_images = function(opts)
   pickers.new(opts, {
-    finder = finders.new_table({
-      results = {
+    finder = finders.new_async_job({
+      command_generator = function() 
+        local target_path = vim.fn.expand("~//package.json")
+        return { "jq", "-c", ".dependencies | to_entries[]", target_path } 
+      end,
 
-        { name = "Yes",      value = { 1, 2, 3, 4, 5 } },
-        { name = "No",       value = { 1, 2, 3, 4, 5 } },
-        { name = "Maybe",    value = { 1, 2, 3, 4, 5 } },
-        { name = "Definitely", value = { 1, 2, 3, 4, 5 } }
-      },
       entry_maker = function(entry)
+        local parsed = vim.json.decode(entry)
+
+        log.debug('parsed', parsed)
         return {
-          display = entry.name,
-          ordinal = entry.name,
-          value = entry.value,
+          display = parsed.key,
+          ordinal = parsed.key,
+          value = parsed,
         }
       end
-
     }),
+
     -- sorts and filters the results
     sorter = config.generic_sorter(opts),
 
