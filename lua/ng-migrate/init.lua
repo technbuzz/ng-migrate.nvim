@@ -3,6 +3,8 @@ local finders = require('telescope.finders')
 local previewers = require('telescope.previewers')
 local config = require('telescope.config').values
 
+local utils = require('ng-migrate.utils')
+
 local log = require('plenary.log'):new()
 log.level = 'debug'
 
@@ -20,40 +22,52 @@ local function get_workspace_root()
   return nil
 end
 
+local function get_migrations(root) 
+  local collection_path = root .. '/node_modules/@angular/core/schematics/collection.json'
+
+  local data = utils.read_json_file(collection_path)
+  if not data or not data.schematics then
+    print('❌ Could not find migrations' .. collection_path)
+    return
+  end
+
+  local list = {}
+
+  for name, details in pairs(data.schematics) do
+    if name:match("migration") then
+      table.insert(list, {
+        name = name,
+        details = details
+      })
+    end
+  end
+
+  return list
+end
+
 M.list_migrations = function(opts)
   local root = get_workspace_root()
 
   if not root then
-    vim.notify("Not angular workspace", vim.log.levels.ERROR)
+    vim.notify("❌ Not in an Angular project", vim.log.levels.ERROR)
     return
   end
 
+  -- get to collections.js
+  local migrations = get_migrations(root)
+
   pickers.new(opts, {
-    finder = finders.new_async_job({
-      command_generator = function()
-        return { "ng", "g", "@angular/core:ng-update", "--help" }
-      end,
+    finder = finders.new_table({
+      results = migrations,
       cwd = root,
-      entry_maker = function(line)
-        -- return {
-        --   display = parsed.key,
-        --   ordinal = parsed.key,
-        --   value = parsed,
-        -- }
+      entry_maker = function(entry)
+        log.debug(entry)
 
-        log.debug('raw_line', line)
-
-        -- 2. Use string matching (NOT JSON) to find the migration ID
-        local id = line:match("([%w%-]*migration[%w%-]*)")
-
-        -- 3. If the line doesn't contain a migration name, skip it
-        if not id then return nil end
-
-        -- 4. Return the valid entry for Telescope
         return {
-          value = id,
-          display = "🅰️  " .. id,
-          ordinal = id
+          value = entry.name,
+          display = "🅰️  " .. entry.name,
+          ordinal = entry.name,
+          details = entry.details
         }
       end
     }),
@@ -73,6 +87,8 @@ M.list_migrations = function(opts)
   }):find()
 end
 
-M.list_migrations()
+vim.api.nvim_create_user_command('NgMigrate', function()
+    M.list_migrations()
+end, {})
 
 return M;
