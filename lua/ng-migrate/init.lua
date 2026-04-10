@@ -2,8 +2,12 @@ local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
 local previewers = require('telescope.previewers')
 local config = require('telescope.config').values
+local action = require('telescope.actions')
+local action_state = require('telescope.actions.state')
+
 
 local utils = require('ng-migrate.utils')
+local executor = require('ng-migrate.executor')
 
 local log = require('plenary.log'):new()
 log.level = 'debug'
@@ -45,6 +49,8 @@ local function get_migrations(root)
   return list
 end
 
+
+
 M.list_migrations = function(opts)
   local root = get_workspace_root()
 
@@ -79,16 +85,30 @@ M.list_migrations = function(opts)
       title = "Migration Details",
 
       define_preview = function(self, entry)
-        log.debug('entry', entry)
         local lines = vim.split(vim.inspect(entry.details.description), "\n")
-        log.debug('lines', lines)
         vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
 
 
         vim.api.nvim_set_option_value("wrap", true, { win = self.state.winid })
         vim.api.nvim_set_option_value("foldcolumn", "3", { win = self.state.winid })
       end
-    })
+    }),
+
+    attach_mappings = function(prompt_bufnr, _) 
+      action.select_default:replace(function()
+        local selection = action_state.get_selected_entry()
+
+        local migration_name = selection.ordinal
+        action.close(prompt_bufnr)
+
+        executor.confirm_and_run(migration_name)
+
+
+        log.debug('selected', selection)
+
+      end)
+      return true
+    end
 
   }):find()
 end
