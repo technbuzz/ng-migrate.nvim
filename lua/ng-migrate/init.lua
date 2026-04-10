@@ -61,10 +61,10 @@ M.list_migrations = function(opts)
       results = migrations,
       cwd = root,
       entry_maker = function(entry)
-        log.debug(entry)
+        -- log.debug(entry)
 
         return {
-          value = entry.name,
+          value = entry.details.description,
           display = "🅰️  " .. entry.name,
           ordinal = entry.name,
           details = entry.details
@@ -76,11 +76,17 @@ M.list_migrations = function(opts)
     sorter = config.generic_sorter(opts),
 
     previewer = previewers.new_buffer_previewer({
-      title = "Docker Image Details",
+      title = "Migration Details",
+
       define_preview = function(self, entry)
-        vim.api.nvim_buf_set_lines(self.state.bufnr, 0, 0, true,
-          vim.tbl_flatten({ "Hello", "Every One", vim.split(vim.inspect(entry.value), "\n") })
-        )
+        log.debug('entry', entry)
+        local lines = vim.split(vim.inspect(entry.details.description), "\n")
+        log.debug('lines', lines)
+        vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
+
+
+        vim.api.nvim_set_option_value("wrap", true, { win = self.state.winid })
+        vim.api.nvim_set_option_value("foldcolumn", "3", { win = self.state.winid })
       end
     })
 
