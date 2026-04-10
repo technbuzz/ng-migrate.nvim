@@ -1,0 +1,16 @@
+{
+  "name": "ng-migrate-test",
+  "schematics": {
+    "standalone-migration": {
+      "description": "Convert to standalone components",
+      "version": "17.0.0"
+    },
+    "control-flow-migration": {
+      "description": "Switch to @if and @for",
+      "version": "18.0.0"
+    },
+    "random-style-check": {
+      "description": "Not a migration, just a tool"
+    }
+  }
+}
