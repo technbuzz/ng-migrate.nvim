@@ -27,7 +27,9 @@ local function get_workspace_root()
 end
 
 local function get_migrations(root) 
+  -- NOTE: use fs.find & joinpath for proper implmentioan
   local collection_path = root .. '/node_modules/@angular/core/schematics/collection.json'
+
 
   local data = utils.read_json_file(collection_path)
   if not data or not data.schematics then
@@ -49,6 +51,52 @@ local function get_migrations(root)
   return list
 end
 
+local function get_nested_migrations(root, selection)
+  local normalized = selection.details.schema:gsub("^%./", "")
+  local sub_coll_path = root .. '/node_modules/@angular/core/schematics/' .. normalized
+  local data = utils.read_json_file(sub_coll_path)
+
+  if not data then
+    print('❌ Could not find migrations' .. sub_coll_path)
+    return
+  end
+
+  return data
+end
+
+local function extract_nested_prompts(schema)
+  local props = schema.properties 
+  -- log.debug('props', schema, 'props', props)
+
+  if not props then
+    print("No Props found")
+    log.debug(vim.inspect(schema))
+    return
+  end
+
+  local keys = {}
+  for k in pairs(props) do
+    table.insert(keys, k)
+  end
+
+  table.sort(keys)
+  log.debug('sortedkeys', keys)
+
+  for i, key in ipairs(keys) do
+    local details = props[key]
+    local prompt = details["x-prompt"]
+    local p_type = details.type
+
+    log.debug('key', key)
+    log.debug('details', details)
+    log.debug('prompt', prompt)
+    log.debug('p_type', p_type)
+    print(string.format("[%s] (%s): %s", key, p_type, prompt))
+    log.debug(string.format("[%s] (%s): %s", key, p_type, prompt))
+  end
+
+
+end
 
 
 M.list_migrations = function(opts)
@@ -67,7 +115,6 @@ M.list_migrations = function(opts)
       results = migrations,
       cwd = root,
       entry_maker = function(entry)
-        -- log.debug(entry)
 
         return {
           value = entry.details.description,
@@ -101,10 +148,15 @@ M.list_migrations = function(opts)
         local migration_name = selection.ordinal
         action.close(prompt_bufnr)
 
-        executor.confirm_and_run(migration_name)
+
+        local root = get_workspace_root()
+        local sub_schema = get_nested_migrations(root, selection)
+        local sub_det = extract_nested_prompts(sub_schema)
+
+        -- executor.confirm_and_run(migration_name)
 
 
-        log.debug('selected', selection)
+        -- log.debug('selected', selection)
 
       end)
       return true
