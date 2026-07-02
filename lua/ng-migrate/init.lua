@@ -55,6 +55,8 @@ M.list_migrations = function(opts)
 
   -- get to collections.js
   local migrations = get_migrations(root)
+  
+  log.debug(migrations)
 
   pickers.new(opts, {
     finder = finders.new_table({
@@ -79,9 +81,9 @@ M.list_migrations = function(opts)
       title = "Migration Details",
 
       define_preview = function(self, entry)
-        log.debug('entry', entry)
+        -- log.debug('entry', entry)
         local lines = vim.split(vim.inspect(entry.details.description), "\n")
-        log.debug('lines', lines)
+        -- log.debug('lines', lines)
         vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
 
 
@@ -94,6 +96,7 @@ M.list_migrations = function(opts)
 end
 
 vim.api.nvim_create_user_command('NgMigrate', function()
+    
     M.list_migrations()
 end, {})
 
