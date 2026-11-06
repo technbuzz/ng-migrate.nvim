@@ -1,7 +1,10 @@
 local pickers = require('telescope.pickers')
 local finders = require('telescope.finders')
+local actions = require('telescope.actions')
+local action_state = require('telescope.actions.state')
 local previewers = require('telescope.previewers')
 local config = require('telescope.config').values
+local nestedMigs = require('ng-migrate.nested_migs')
 
 local utils = require('ng-migrate.utils')
 
@@ -22,6 +25,14 @@ local function get_workspace_root()
   return nil
 end
 
+---@class MigrationWithRoot
+---@field list Migration[] List of migrations
+---@field rootPath string Path to root collection.json
+
+---Creates a table from collection.json and returns a list of migrations 
+---along with the root path
+---@param root string
+---@returns MigrationWithRoot
 local function get_migrations(root) 
   local collection_path = root .. '/node_modules/@angular/core/schematics/collection.json'
 
@@ -33,6 +44,7 @@ local function get_migrations(root)
 
   local list = {}
 
+  -- We are interested in migration schematics not other collections
   for name, details in pairs(data.schematics) do
     if name:match("migration") then
       table.insert(list, {
@@ -42,7 +54,24 @@ local function get_migrations(root)
     end
   end
 
-  return list
+  return { list = list, root = collection_path }
+end
+
+local presentTerm = function(command)
+  vim.cmd.vnew()
+  vim.cmd.wincmd("J")
+  vim.api.nvim_win_set_height(0, 15)
+
+  vim.api.nvim_create_autocmd("TermOpen", {
+    buffer = 0,
+    callback = function()
+      log.debug('term open ran')
+      vim.api.nvim_win_set_cursor(0, { 9999, 0 })
+    end
+  })
+
+  vim.api.nvim_command("term " .. command)
+
 end
 
 M.list_migrations = function(opts)
@@ -55,15 +84,15 @@ M.list_migrations = function(opts)
 
   -- get to collections.js
   local migrations = get_migrations(root)
-  
-  log.debug(migrations)
+  if not migrations then
+    return
+  end
 
   pickers.new(opts, {
     finder = finders.new_table({
-      results = migrations,
+      results = migrations.list,
       cwd = root,
       entry_maker = function(entry)
-        -- log.debug(entry)
 
         return {
           value = entry.details.description,
@@ -90,7 +119,33 @@ M.list_migrations = function(opts)
         vim.api.nvim_set_option_value("wrap", true, { win = self.state.winid })
         vim.api.nvim_set_option_value("foldcolumn", "3", { win = self.state.winid })
       end
-    })
+    }),
+
+    attach_mappings = function(prompt_bufnr)
+      actions.select_default:replace(function()
+        local selection = action_state.get_selected_entry()
+
+        -- log.debug('selection', selection)
+
+
+        local migs = nestedMigs.get_nested_migrations(migrations.root, selection)
+        local flags = nestedMigs.get_prompt_answers(migs)
+        local flat_flags = utils.flatten(flags)
+        local flag_string = table.concat(flat_flags, " ")
+        -- log.debug('flat_flags', flat_flags)
+        -- log.debug('flat_flag_string', table.concat(flat_flags, " "))
+        -- log.debug('migs', migs)
+
+        actions.close(prompt_bufnr)
+        local command = string.format("npx ng g @angular/core:%s %s %s", selection.ordinal, flag_string, "-d")
+        log.debug('command', command)
+
+       -- vim.cmd("botright 15split | term " .. command) 
+       presentTerm(command)
+        -- vim.fn.system(command)
+      end)
+      return true
+    end
 
   }):find()
 end
