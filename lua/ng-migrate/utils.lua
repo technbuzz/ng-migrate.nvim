@@ -63,6 +63,34 @@ M.read_json_file = function(path)
   return vim.json.decode(content)
 end
 
+
+M.confirm_dry_run= function() 
+  local result = nil
+  local opts = {
+    "Preview (Dry Run)",
+    "Execute (Writes to disk)",
+    "Cancel"
+  }
+
+  vim.ui.select(opts, {prompt = "By default migration will run in dry run where no changes are made"},
+    function(choice, idx)
+      if not choice or choice == 'Cancel' then 
+        print("Action Cancelled by user")
+        result = nil
+        return
+
+      elseif idx == 1 then
+        result = "-d"
+        return
+      end
+
+      result = ""
+    end
+  )
+
+  return result
+end
+
 local function camelToKebab(camel)
   local matched = string.gsub(camel, '(%u)', function(match)
     return '-' .. string.lower(match) 

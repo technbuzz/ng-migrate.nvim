@@ -26,27 +26,6 @@ M.get_nested_migrations = function(rootCollectionPath, selection)
 end
 
 
-local confirm_dry_run= function() 
-  local result = nil
-  local opts = {
-    "Preview (Dry Run)",
-    "Execute (Writes to disk)",
-    "Cancel"
-  }
-
-  vim.ui.select(opts, {prompt = "By default migration will run in dry run where no changes are made"},
-    function(choice, idx)
-      if not choice or choice == 'cancel' then 
-        print("Action Cancelled by user")
-        result = nil
-        return
-      end
-      result = idx
-    end
-  )
-
-  return result == 3 and nil or idx
-end
 
 --- @param prompts SchematicUI[]
 --- @returns table
@@ -94,9 +73,8 @@ M.get_prompt_answers = function(prompts)
   end
 
   run_prompt()
-  local dry_run = confirm_dry_run()
-  log.debug('dry_run', dry_run)
 
+  -- Return nil if user cancels otherwise options table
   return result
 end -- end function
 

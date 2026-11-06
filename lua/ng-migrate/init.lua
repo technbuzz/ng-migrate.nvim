@@ -130,18 +130,28 @@ M.list_migrations = function(opts)
 
         local migs = nestedMigs.get_nested_migrations(migrations.root, selection)
         local flags = nestedMigs.get_prompt_answers(migs)
-        local flat_flags = utils.flatten(flags)
-        local flag_string = table.concat(flat_flags, " ")
-        -- log.debug('flat_flags', flat_flags)
-        -- log.debug('flat_flag_string', table.concat(flat_flags, " "))
-        -- log.debug('migs', migs)
+        local dry_run = utils.confirm_dry_run()
 
-        actions.close(prompt_bufnr)
-        local command = string.format("npx ng g @angular/core:%s %s %s", selection.ordinal, flag_string, "-d")
-        log.debug('command', command)
+        -- If user cancelled the migration that close everything
+        if dry_run then 
+          local flat_flags = utils.flatten(flags)
+          local flag_string = table.concat(flat_flags, " ")
+          -- log.debug('flat_flags', flat_flags)
+          -- log.debug('flat_flag_string', table.concat(flat_flags, " "))
+          -- log.debug('migs', migs)
 
-       -- vim.cmd("botright 15split | term " .. command) 
-       presentTerm(command)
+          actions.close(prompt_bufnr)
+          local command = string.format("npx ng g @angular/core:%s %s %s", selection.ordinal, flag_string, dry_run)
+          log.debug('command', command)
+
+         -- vim.cmd("botright 15split | term " .. command) 
+         presentTerm(command)
+
+        else
+          actions.close(prompt_bufnr)
+          vim.notify_once("Action Cancelled by user")
+        end
+
         -- vim.fn.system(command)
       end)
       return true
