@@ -46,12 +46,12 @@ local function get_migrations(root)
 
   -- We are interested in migration schematics not other collections
   for name, details in pairs(data.schematics) do
-    if name:match("migration") then
+    -- if name:match("migration") then
       table.insert(list, {
         name = name,
         details = details
       })
-    end
+    -- end
   end
 
   return { list = list, root = collection_path }
@@ -148,8 +148,10 @@ M.list_migrations = function(opts)
          presentTerm(command)
 
         else
+          vim.schedule(function() 
+            vim.notify_once("Action Cancelled by user", vim.log.levels.INFO)
+          end)
           actions.close(prompt_bufnr)
-          vim.notify_once("Action Cancelled by user")
         end
 
         -- vim.fn.system(command)
@@ -161,7 +163,6 @@ M.list_migrations = function(opts)
 end
 
 vim.api.nvim_create_user_command('NgMigrate', function()
-    
     M.list_migrations()
 end, {})
 
