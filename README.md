@@ -1,15 +1,22 @@
-your-plugin-repo/
-└── lua/
-    └── ng-migrate/
-        ├── init.lua   <-- Main UI/Telescope logic
-        └── utils.lua  <-- The "Engine room" (read_json, etc.)
-        
-To list all the migration schematics
+# ng-migrate
+
+> [!NOTE]
+> This plugin is still in early stage. There are some polishing required
+
+It makes it easy to apply Angular migration in your current project. It lists through all the available migration
+in your project.
+
+
+# Usage
+
 ```
-❯ ng g @angular/core:output-migration --help 
+:NgMigrate
 ```
 
-All other generator schematics
-```
-❯ ng g @angular/core --help
-```
+For now we only have command. After selecting the appropriate migration answer the follow up questions.
+
+# Install
+
+Requirement: 
+- Neovim 12.2 (but it might work with older version as well)
+- Telescope (for previewers)
