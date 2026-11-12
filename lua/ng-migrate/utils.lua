@@ -75,7 +75,6 @@ M.confirm_dry_run= function()
   vim.ui.select(opts, {prompt = "By default migration will run in dry run where no changes are made"},
     function(choice, idx)
       if not choice or choice == 'Cancel' then 
-        print("Action Cancelled by user")
         result = nil
         return
 

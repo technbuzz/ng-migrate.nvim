@@ -142,7 +142,6 @@ M.list_migrations = function(opts)
 
           actions.close(prompt_bufnr)
           local command = string.format("npx ng g @angular/core:%s %s %s", selection.ordinal, flag_string, dry_run)
-          log.debug('command', command)
 
          -- vim.cmd("botright 15split | term " .. command) 
          presentTerm(command)
