@@ -9,6 +9,9 @@ in your project.
 
 # Usage
 
+> [!TIP]
+> View Demo (https://github.com/technbuzz/ng-migrate/issues/4)
+
 ```
 :NgMigrate
 ```
