@@ -19,6 +19,11 @@ in your project.
 For now we only have command. After selecting the appropriate migration answer the follow up questions.
 
 # Install
+Using [lazy.nvim](https://github.com/folke/lazy.nvim)
+
+```
+  { 'https://github.com/technbuzz/ng-migrate.nvim', opts = {} },
+```
 
 Requirement: 
 - Neovim 12.2 (but it might work with older version as well)
